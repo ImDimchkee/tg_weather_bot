@@ -50,7 +50,7 @@ def scrape_weather_data(latitude: float, longitude: float) -> dict:
     weather_conditions["current_pm10"] = current.Variables(0).Value()
     weather_conditions["current_pm2_5"] = current.Variables(1).Value()
     weather_conditions["current_carbon_monoxide"] = current.Variables(2).Value()
-    weather_conditions["nitrogen_dioxide"] = current.Variables(3).Value()
+    weather_conditions["current_nitrogen_dioxide"] = current.Variables(3).Value()
 
     return weather_conditions
 
