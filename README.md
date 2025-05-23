@@ -4,8 +4,8 @@ A Telegram bot that provides real-time air quality information for a given locat
 
 ## 🚀 Features
 
-- Supports location-based air quality lookups
-- Returns current values for:
+- Supports weekly and current location-based air quality lookups
+- Returns current values or weekly plot for:
   - PM10
   - PM2.5
   - Carbon Monoxide (CO)
@@ -54,5 +54,6 @@ docker run -d flipperd-tech-assignment
 ```
 
 # 🗺 Usage
-Once running, send any city name to the bot via Telegram chat.
-You'll receive the current air quality data for that area
+- Once running, send any city name to the bot via Telegram chat.
+- You'll receive the current air quality data for that area.
+- Refer to /help command for advanced usage explanation
