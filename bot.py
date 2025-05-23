@@ -18,7 +18,7 @@ from telegram.ext import (
 import cat
 
 # Open-meteo module import
-from open_meteo import geocoding_search_city, scrape_weather_data
+from open_meteo import geocoding_search_city, scrape_weather_data, scrape_historic_weather_data
 
 
 # logging
@@ -39,7 +39,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         update (Update): Incoming update containing a user message.
         context (ContextTypes.DEFAULT_TYPE): Contextual information about the update.
     """
-    logger.info(f"%s User issues a /start command", update.effective_user.id)
+    logger.info("%s User issues a /start command", update.effective_user.id)
 
     await update.message.reply_text(
         "Welcome, Flipper! 🐬\n\n"
@@ -57,7 +57,18 @@ async def weather_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         update (Update): Incoming update containing a user message.
         context (ContextTypes.DEFAULT_TYPE): Contextual information about the update.
     """
-    city_name = update.message.text.strip()
+    logger.info("%s User issued a /current command", update.effective_user.id)
+
+    if context.args:
+        city_name = " ".join(context.args).strip()
+    else:
+        city_name = update.message.text.replace("/current", "").strip() if update.message and update.message.text else None
+
+    if not city_name:
+        logger.info("%s User did not specify a city name", update.effective_user.id)
+        await update.message.reply_text("❗ An error occurred. Please provide a valid city name after the /current command.")
+        return
+    
     logger.info(f"Received city query for %s", city_name)
 
     try:
@@ -80,11 +91,47 @@ async def weather_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             parse_mode="Markdown",
         )
 
+
     except Exception as e:
         logger.error(f"Error fetching weather data for %s: %s", city_name, e)
         await update.message.reply_text(
             "An error occurred while retrieving weather data."
         )
+
+async def weather_weekly_plot_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """
+    Scrape historic weather data and present a plot
+
+    Args:
+        update (Update): Incoming update containing a user message.
+        context (ContextTypes.DEFAULT_TYPE): Contextual information about the update.
+    """
+    if context.args:
+        city_name = " ".join(context.args).strip()
+    else:
+        logger.info("%s User did not specify a city name", update.effective_user.id)
+        await update.message.reply_text("❗ An error occurred. Please provide a valid city name after the /weekly command.")
+        return
+
+    
+    logger.info(f"Received historic city query for %s", city_name)
+
+    try:
+        city_data = geocoding_search_city(city_name)
+        plot_image_path = scrape_historic_weather_data(
+            city_data.get("latitude"), city_data.get("longitude")
+        )
+        logger.info(f"Successfully generated plot and saved at: %s", plot_image_path)
+        await update.message.reply_photo(plot_image_path, caption="Here's a 1 week historic plot ☝")
+    except Exception as e:
+        logger.error("Error fetching historic weather data for %s: %s", city_name, e)
+        await update.message.reply_text(
+            "An error occured while retrieving historic weather data 😢"
+        )
+    finally:
+        if os.path.exists(plot_image_path):
+            os.remove(plot_image_path)
+            logger.info("Successfully removed leftover files: %s", plot_image_path)
 
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -99,19 +146,31 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     await update.message.reply_text(
         "*What this bot can do?*❔\n\
-    - If you send actual city name in English to this bot,\n\
+    - You can send actual city name in English to this bot without any commands,\n\
       it will lookup its coordinates using public API\n\
       Then it queries various metrics from the same API.\n\
 \n\
     - Implemented metrics are:\n\
       pm10 - particles smaller than 10µm\n\
       pm2.5 - particles smaller than 2.5µm\n\
-      Carbon monoxide (CO) level - Poisonous gas\n\
+      Carbon monoxide (CO) level - poisonous gas\n\
+      Nitrogen Dioxide (NO₂) level - common air pollutant\n\
 \n\
     - Commands list:\n\
       /start to display welcoming message\n\
       /help to display this menu again\n\
-      /cat to get a random cat image",
+      /current <City name> current air quality conditions\n\
+      /weekly <City name> 1 week historic plot of air qiality conditions\n\
+      /cat to get a random cat image\n\
+\n\
+    - Usage examples:\n\
+    Let's consider $ sign a start of the line:\n\
+      - Current conditions:\n\
+        /current London\n\
+        London\n\
+        london\n\
+      - Weekly Data plots:\n\
+      /weekly London",
         parse_mode="Markdown",
     )
 
@@ -143,7 +202,7 @@ async def cat_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     finally:
         if os.path.exists(cat_image_path):
             os.remove(cat_image_path)
-            logger.info("Successfully removed leftover files")
+            logger.info("Successfully removed leftover files %s: ", cat_image_path)
 
 
 def main() -> None:
@@ -162,6 +221,8 @@ def main() -> None:
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CommandHandler("help", help_command))
     application.add_handler(CommandHandler("cat", cat_command))
+    application.add_handler(CommandHandler("current", weather_handler))
+    application.add_handler(CommandHandler("weekly", weather_weekly_plot_command))
 
     application.add_handler(
         MessageHandler(filters.TEXT & ~filters.COMMAND, weather_handler)
