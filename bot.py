@@ -43,7 +43,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
     await update.message.reply_text(
         "Welcome, Flipper! 🐬\n\n"
-        "This bot can check air quality and weather for any city you send me (in English).\n\n"
+        "This bot can check air quality for any city you send me (in English).\n\n"
         "Just type the city name, and I’ll fetch the latest data for you.\n\n"
         "Use the /help command to see full usage instructions. 😉"
     )
