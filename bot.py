@@ -76,6 +76,7 @@ async def weather_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"- PM10: {weather_data.get('current_pm10')}\n"
             f"- PM2.5: {weather_data.get('current_pm2_5')}\n"
             f"- CO (Carbon Monoxide): {weather_data.get('current_carbon_monoxide')}",
+            f"- NO₂ (Nitrogen Dioxide): {weather_data.get('current_nitrogen_dioxide')}",
             parse_mode="Markdown",
         )
 
@@ -126,6 +127,9 @@ async def cat_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     logger.info(
         f"%s User issued /cat command, downloading...", update.effective_user.id
     )
+
+    await update.message.reply_text("Fetching image, it may take a while 🐱‍💻")
+
     try:
         cat_image_path = cat.getCat(format="png")
         await update.message.reply_photo(
