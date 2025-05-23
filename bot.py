@@ -75,7 +75,7 @@ async def weather_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "*🌤 Current Air Quality Conditions:*\n"
             f"- PM10: {weather_data.get('current_pm10')}\n"
             f"- PM2.5: {weather_data.get('current_pm2_5')}\n"
-            f"- CO (Carbon Monoxide): {weather_data.get('current_carbon_monoxide')}",
+            f"- CO (Carbon Monoxide): {weather_data.get('current_carbon_monoxide')}\n"
             f"- NO₂ (Nitrogen Dioxide): {weather_data.get('current_nitrogen_dioxide')}",
             parse_mode="Markdown",
         )
